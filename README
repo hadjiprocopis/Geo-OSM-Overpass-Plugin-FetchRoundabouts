@@ -1,5 +1,3 @@
-NAME
-
     Geo::OSM::Overpass::Plugin::FetchRoundabouts - Plugin for
     Geo::OSM::Overpass to fetch bus stop data in given area
 

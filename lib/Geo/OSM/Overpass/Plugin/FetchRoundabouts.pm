@@ -91,6 +91,7 @@ EOQ
 }
 
 # end of program, pod starts here
+=encoding utf8
 =head1 NAME
 
 Geo::OSM::Overpass::Plugin::FetchRoundabouts - Plugin for L<Geo::OSM::Overpass> to fetch bus stop data in given area
