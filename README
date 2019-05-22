@@ -1,0 +1,218 @@
+NAME
+
+    Geo::OSM::Overpass::Plugin::FetchRoundabouts - Plugin for
+    Geo::OSM::Overpass to fetch bus stop data in given area
+
+VERSION
+
+    Version 0.01
+
+SYNOPSIS
+
+    This is a plugin for Geo::OSM::Overpass, which is a module to fetch
+    data from the OpenStreetMap Project using Overpass API. It fetches data
+    about bus stops within a geographical area defined by a bounding box.
+    In order to use this plugin, first create a Geo::BoundingBox object for
+    the bounding box enclosing the area. Secondly, create a
+    Geo::OSM::Overpass object to do the communication with the Overpass API
+    server. Thirdly, create the plugin object and run its gorun() method.
+
+        use Geo::BoundingBox;
+        use Geo::OSM::Overpass;
+        use Geo::OSM::Overpass::Plugin::FetchRoundabouts;
+    
+        my $bbox = Geo::BoundingBox->new();
+        # a bounding box (bottom-left corner, top-right corner) in LAT,LON convention
+        $bbox->bounded_by(35.177119, 33.333039, 35.178417, 33.334980);
+        my $eng = Geo::OSM::Overpass->new();
+        die unless defined $eng;
+        $eng->verbosity(2);
+        $eng->bbox($bbox) or die;
+        my $plug = Geo::OSM::Overpass::Plugin::FetchRoundabouts->new({
+            'engine' => $eng
+        });
+        die unless defined $plug;
+        $plug->gorun() or die;
+        # print results, but it's a reference!
+        print "Results: ".${$eng->last_query_result()}."\n";
+        # prints:
+        # <?xml version="1.0"?>
+        # <osm version="0.6" generator="Overpass API 0.7.55.7 8b86ff77">
+        # <note>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</note>
+        # <meta osm_base="2019-05-15T21:50:02Z"/>
+        # 
+        #   <way id="28512252">
+        #     <center lat="35.1777960" lon="33.3340230"/>
+        #     <nd ref="313200571"/>
+        #     ...
+        #   </way>
+        #   <node id="313200571" lat="35.1776945" lon="33.3340493"/>
+        #   <node id="313200572" lat="35.1776958" lon="33.3339902"/>
+        #   ..,
+        # 
+        # </osm>
+    
+        # Now let's keep only the center of the way and make a node with that location
+        $plug->gorun({
+            'convert-to-nodes' => 1
+        }) or die;
+        print "Results: ".${$eng->last_query_result()}."\n";
+        # WARNING: the node printed below is real and lies on the periphery of the roundabout
+        # However, its actual location is slightly different
+        # to the one printed. We moved it a bit to reflect the centre of the way
+    
+        # <?xml version="1.0"?>
+        # <osm version="0.6" generator="Overpass API 0.7.55.7 8b86ff77">
+        # <note>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</note>
+        # <meta osm_base="2019-05-15T22:07:02Z"/>
+        #   <node id="313200571" lat="35.1777960" lon="33.3340230">
+        #     <tag k="highway" v="primary"/>
+        #     <tag k="junction" v="roundabout"/>
+        #     <tag k="lanes" v="2"/>
+        #     <tag k="oneway" v="yes"/>
+        #     <tag k="surface" v="asphalt"/>
+        #   </node>
+        # </osm>
+
+SUBROUTINES/METHODS
+
+ new({'engine' => $eng})
+
+    Constructor. A hashref of parameters contains the only required
+    parameter which is an already created Geo::OSM::Overpass object. If in
+    your plugin have no use for this, then call it like
+    new({'engine'=undef})>
+
+ gorun(...)
+
+    It will execute the query using the specified Geo::OSM::Overpass object
+    (aka the engine) specified in the constructor.
+
+    It takes an optional hashref of parameters:
+
+      * convert-to-nodes : if set to 1 then the result of the query is
+      modified in order to eliminate all the nodes from the periphery of
+      the roundabout (and the way) and replace them with just one node with
+      a real id but its coordinates slightly different in order to coincide
+      with the centre of the roundabout.
+
+    It will return 1 on success or undef on failure.
+
+    The result of the query can be accessed using ```print "Results:
+    ".${eng->last_query_result()}."\n";```
+
+AUTHOR
+
+    Andreas Hadjiprocopis, <bliako at cpan.org>
+
+CAVEATS
+
+    This is alpha release, the API is not yet settled and may change.
+
+BUGS
+
+    Please report any bugs or feature requests to
+    bug-geo-osm-overpass-plugin-FetchRoundabouts at rt.cpan.org, or through
+    the web interface at
+    https://rt.cpan.org/NoAuth/ReportBug.html?Queue=Geo-OSM-Overpass-Plugin-FetchRoundabouts.
+    I will be notified, and then you'll automatically be notified of
+    progress on your bug as I make changes.
+
+SUPPORT
+
+    You can find documentation for this module with the perldoc command.
+
+        perldoc Geo::OSM::Overpass::Plugin::FetchRoundabouts
+
+    You can also look for information at:
+
+      * Geo::BoundingBox a geographical bounding box class.
+
+      * Geo::OSM::Overpass aka the engine.
+
+      * Geo::OSM::Plugin the parent class of all the plugins for
+      Geo::OSM::Overpass
+
+      * https://www.openstreetmap.org main entry point for the
+      OpenStreetMap Project.
+
+      * https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
+      Overpass API query language guide.
+
+      * https://overpass-turbo.eu Overpass Turbo query language online
+      sandbox. It can also convert to XML query language.
+
+      * http://overpass-api.de/query_form.html yet another online sandbox
+      and converter.
+
+      * RT: CPAN's request tracker (report bugs here)
+
+      https://rt.cpan.org/NoAuth/Bugs.html?Dist=Geo-OSM-Overpass-Plugin-FetchRoundabouts
+
+      * AnnoCPAN: Annotated CPAN documentation
+
+      http://annocpan.org/dist/Geo-OSM-Overpass-Plugin-FetchRoundabouts
+
+      * CPAN Ratings
+
+      https://cpanratings.perl.org/d/Geo-OSM-Overpass-Plugin-FetchRoundabouts
+
+      * Search CPAN
+
+      https://metacpan.org/release/Geo-OSM-Overpass-Plugin-FetchRoundabouts
+
+DEDICATIONS
+
+    Almaz
+
+ACKNOWLEDGEMENTS
+
+    The OpenStreetMap project and all the good people who thought it,
+    implemented it, collected the data and publicly host it.
+
+    ``` @misc{OpenStreetMap, author = {{OpenStreetMap contributors}}, title
+    = {{Planet dump retrieved from https://planet.osm.org }}, howpublished
+    = "\url{ https://www.openstreetmap.org }", year = {2017}, } ```
+
+LICENSE AND COPYRIGHT
+
+    Copyright 2019 Andreas Hadjiprocopis.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of the the Artistic License (2.0). You may obtain a
+    copy of the full license at:
+
+    http://www.perlfoundation.org/artistic_license_2_0
+
+    Any use, modification, and distribution of the Standard or Modified
+    Versions is governed by this Artistic License. By using, modifying or
+    distributing the Package, you accept this license. Do not use, modify,
+    or distribute the Package, if you do not accept this license.
+
+    If your Modified Version has been derived from a Modified Version made
+    by someone other than you, you are nevertheless required to ensure that
+    your Modified Version complies with the requirements of this license.
+
+    This license does not grant you the right to use any trademark, service
+    mark, tradename, or logo of the Copyright Holder.
+
+    This license includes the non-exclusive, worldwide, free-of-charge
+    patent license to make, have made, use, offer to sell, sell, import and
+    otherwise transfer the Package with respect to any patent claims
+    licensable by the Copyright Holder that are necessarily infringed by
+    the Package. If you institute patent litigation (including a
+    cross-claim or counterclaim) against any party alleging that the
+    Package constitutes direct or contributory patent infringement, then
+    this Artistic License to you shall terminate on the date that such
+    litigation is filed.
+
+    Disclaimer of Warranty: THE PACKAGE IS PROVIDED BY THE COPYRIGHT HOLDER
+    AND CONTRIBUTORS "AS IS' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
+    THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+    PURPOSE, OR NON-INFRINGEMENT ARE DISCLAIMED TO THE EXTENT PERMITTED BY
+    YOUR LOCAL LAW. UNLESS REQUIRED BY LAW, NO COPYRIGHT HOLDER OR
+    CONTRIBUTOR WILL BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, OR
+    CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THE PACKAGE,
+    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 1; # End of
+    Geo::OSM::Overpass::Plugin::FetchRoundabouts
+
